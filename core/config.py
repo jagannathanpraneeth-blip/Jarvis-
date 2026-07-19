@@ -74,15 +74,15 @@ class Settings:
     plugins: PluginSettings = field(default_factory=PluginSettings)
 
     # Secrets (loaded from .env, never from YAML)
-    gemini_api_key: str = ""
+    nvidia_api_key: str = ""
 
     def validate(self) -> None:
         """Check that required settings are present. Exit with a clear message if not."""
-        if not self.gemini_api_key:
+        if not self.nvidia_api_key:
             print(
-                "\n[JARVIS] ERROR: GEMINI_API_KEY not found.\n"
+                "\n[JARVIS] ERROR: NVIDIA_API_KEY not found.\n"
                 "  1. Copy .env.example to .env\n"
-                "  2. Paste your Gemini API key\n"
+                "  2. Paste your NVIDIA API key\n"
                 "  3. Re-run the assistant.\n"
             )
             sys.exit(1)
@@ -127,7 +127,7 @@ def load_settings() -> Settings:
         logging=_build_sub_settings(LoggingSettings, yaml_data.get("logging")),
         voice=_build_sub_settings(VoiceSettings, yaml_data.get("voice")),
         plugins=_build_sub_settings(PluginSettings, yaml_data.get("plugins")),
-        gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
+        nvidia_api_key=os.getenv("NVIDIA_API_KEY", ""),
     )
 
     return settings

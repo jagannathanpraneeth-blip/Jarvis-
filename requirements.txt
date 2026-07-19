@@ -1,5 +1,5 @@
-# JARVIS — Phase 1 dependencies
-google-genai>=1.0.0
+# JARVIS — Core Dependencies
+openai>=1.0.0
 python-dotenv>=1.0.0
 PyYAML>=6.0
 
