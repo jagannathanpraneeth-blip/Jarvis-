@@ -2,7 +2,7 @@
 Workspace Plugin for JARVIS
 
 Provides tools for reading, writing, and listing files.
-Crucial for autonomous coding.
+Crucial for autonomous coding. Includes safety rails for writing files.
 """
 
 import os
@@ -34,6 +34,20 @@ def register(brain, settings):
 
     def write_file(filepath: str, content: str) -> str:
         """Writes content to a file (overwrites)."""
+        
+        # --- Safety Rail ---
+        if not settings.plugins.god_mode:
+            print(f"\n[WARNING] JARVIS is attempting to write to a file:")
+            print(f"  File: {filepath}")
+            try:
+                response = input("  Allow file modification? [y/N]: ").strip().lower()
+                if response != 'y':
+                    logger.info(f"User rejected file write to {filepath}.")
+                    return "ERROR: The user rejected this action. You do not have permission to write this file."
+            except Exception as e:
+                return f"ERROR: Failed to get user permission: {e}"
+        # -------------------
+        
         try:
             path = Path(filepath).resolve()
             # Ensure parent directories exist

@@ -2,7 +2,7 @@
 OS Terminal Plugin for JARVIS
 
 Provides the LLM with the ability to execute arbitrary terminal commands.
-WARNING: This is extremely powerful.
+WARNING: This is extremely powerful. Includes safety rails.
 """
 
 import subprocess
@@ -18,8 +18,19 @@ def register(brain, settings):
     
     def execute_command(command: str) -> str:
         """Executes a terminal command."""
+        
+        # --- Safety Rail ---
         if not settings.plugins.god_mode:
-            return "ERROR: God Mode is disabled. You do not have permission to execute terminal commands."
+            print(f"\n[WARNING] JARVIS is attempting to execute a terminal command:")
+            print(f"  Command: {command}")
+            try:
+                response = input("  Allow execution? [y/N]: ").strip().lower()
+                if response != 'y':
+                    logger.info("User rejected command execution.")
+                    return "ERROR: The user rejected this action. You do not have permission to execute this command."
+            except Exception as e:
+                return f"ERROR: Failed to get user permission: {e}"
+        # -------------------
             
         logger.warning(f"Executing terminal command: {command}")
         

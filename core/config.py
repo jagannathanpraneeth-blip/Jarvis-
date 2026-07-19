@@ -75,6 +75,7 @@ class Settings:
 
     # Secrets (loaded from .env, never from YAML)
     nvidia_api_key: str = ""
+    gemini_api_key: str = ""
 
     def validate(self) -> None:
         """Check that required settings are present. Exit with a clear message if not."""
@@ -128,6 +129,7 @@ def load_settings() -> Settings:
         voice=_build_sub_settings(VoiceSettings, yaml_data.get("voice")),
         plugins=_build_sub_settings(PluginSettings, yaml_data.get("plugins")),
         nvidia_api_key=os.getenv("NVIDIA_API_KEY", ""),
+        gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
     )
 
     return settings

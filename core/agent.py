@@ -27,6 +27,7 @@ class AutonomousAgent:
             api_key=settings.nvidia_api_key
         )
         self.model = settings.brain.model
+        self.total_tool_calls = 0
         
     async def run(self, goal: str, max_iterations: int = 15) -> str:
         """Runs the autonomous loop to achieve the goal."""
@@ -75,6 +76,14 @@ class AutonomousAgent:
             
             # Execute tools
             for tool_call in message.tool_calls:
+                
+                # --- Rate Limiter Safety Rail ---
+                self.total_tool_calls += 1
+                if self.total_tool_calls > 15:
+                    logger.error(f"Agent '{self.name}' exceeded maximum tool calls (15).")
+                    return f"ERROR: Runaway loop detected. Terminating agent after 15 tool calls."
+                # --------------------------------
+                
                 tool_name = tool_call.function.name
                 try:
                     tool_args = json.loads(tool_call.function.arguments)
