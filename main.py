@@ -15,6 +15,10 @@ from core.logger import setup_logging, get_logger
 from core.brain import Brain
 from memory.buffer import ConversationBuffer
 from core.voice_loop import VoiceLoop
+import threading
+
+from ui.tray import TrayApp
+from ui.dashboard import serve as serve_dashboard
 
 
 def print_banner(assistant_name: str, user_name: str) -> None:
@@ -57,6 +61,19 @@ def main() -> None:
     buffer = ConversationBuffer(max_turns=settings.memory.buffer_size)
 
     logger.info("All systems online.")
+    
+    # ── Start UI Components (Phase 7) ──
+    logger.info("Starting UI components...")
+    tray = TrayApp(settings)
+    tray.start()
+    
+    dashboard_thread = threading.Thread(
+        target=serve_dashboard, 
+        args=(settings, brain), 
+        daemon=True
+    )
+    dashboard_thread.start()
+    
     print_banner(settings.assistant_name, settings.user_name)
 
     if args.voice:

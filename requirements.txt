@@ -19,3 +19,8 @@ pygetwindow>=0.0.9
 pyautogui>=0.9.54
 Pillow>=10.0.0
 google-genai>=0.1.0
+
+# JARVIS — Phase 7 dependencies (UI & Control)
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pystray>=0.19.4
