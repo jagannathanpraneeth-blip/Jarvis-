@@ -1,0 +1,54 @@
+# ============================================================
+# JARVIS — Settings
+# Non-secret configuration lives here. Secrets go in .env
+# ============================================================
+
+# --- General ---
+assistant_name: "JARVIS"
+user_name: "Sir"          # How JARVIS addresses you — change to your name
+
+# --- LLM Brain ---
+brain:
+  model: "gemini-2.0-flash"            # Gemini model to use
+  temperature: 0.7                      # Response creativity (0.0 = deterministic, 1.0 = creative)
+  max_output_tokens: 2048               # Max tokens per response
+  personality_file: "config/personality.md"
+
+# --- Memory ---
+memory:
+  buffer_size: 20                       # Number of conversation turns to keep in short-term memory
+
+# --- Logging ---
+logging:
+  level: "INFO"                         # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  log_to_file: true
+  log_dir: "logs"
+
+# --- Voice ---
+voice:
+  wake_word: "hey_jarvis"
+  wake_word_threshold: 0.5
+  stt_model: "base.en"           # tiny.en, base.en, small.en, medium.en
+  tts_engine: "piper"            # piper, system
+  tts_voice: "en_US-lessac-medium"
+  push_to_talk_key: "space"
+  silence_threshold: 0.02        # Audio energy level to detect silence
+  silence_duration: 1.5          # Seconds of silence to stop recording
+  continuous_conversation: false  # Keep listening after response
+
+# --- Plugins (Phase 4 — stubbed) ---
+# plugins:
+#   enabled:
+#     - filesystem
+#     - apps
+#     - web_search
+#     - system
+#   disabled:
+#     - smart_home
+
+# --- Phase 7 Features (all off by default) ---
+# polish:
+#   proactive_reminders: false
+#   ambient_context: false
+#   continuous_conversation: false
+#   visual_hud: false
