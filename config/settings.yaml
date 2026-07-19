@@ -36,13 +36,11 @@ voice:
   silence_duration: 1.5          # Seconds of silence to stop recording
   continuous_conversation: false  # Keep listening after response
 
-# --- Plugins (Phase 4 — stubbed) ---
-# plugins:
-#   enabled:
-#     - filesystem
-#     - apps
-#     - web_search
-#     - system
+# --- Plugins ---
+plugins:
+  enabled: true
+  god_mode: true
+  plugin_dir: "plugins"
 #   disabled:
 #     - smart_home
 

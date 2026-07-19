@@ -17,6 +17,7 @@ from google.genai.errors import ClientError
 
 from core.config import Settings
 from core.logger import get_logger
+from core.plugin_manager import PluginManager
 
 logger = get_logger("brain")
 
@@ -72,6 +73,10 @@ class Brain:
 
         # Tool declarations for the API
         self._tools: list[types.Tool] = list(BUILTIN_TOOLS)
+
+        # Load dynamic plugins
+        self._plugin_manager = PluginManager(settings, self)
+        self._plugin_manager.load_all()
 
         logger.info(
             f"Brain initialized — model={self._model}, "
@@ -241,18 +246,25 @@ class Brain:
             if prop_name in parameters.get("required", []):
                 required.append(prop_name)
 
-        new_tool = types.Tool(
-            function_declarations=[
-                types.FunctionDeclaration(
-                    name=name,
-                    description=description,
-                    parameters=types.Schema(
-                        type=types.Type.OBJECT,
-                        properties=props,
-                        required=required if required else None,
-                    ),
-                )
-            ]
+        new_func_decl = types.FunctionDeclaration(
+            name=name,
+            description=description,
+            parameters=types.Schema(
+                type=types.Type.OBJECT,
+                properties=props,
+                required=required if required else None,
+            )
         )
-        self._tools.append(new_tool)
+        
+        # If we already have a tool, add to its function declarations, else create new tool
+        if self._tools:
+            # We assume we just append to the first Tool object's function_declarations
+            # as Gemini allows multiple function declarations in one Tool.
+            if not self._tools[0].function_declarations:
+                self._tools[0].function_declarations = []
+            self._tools[0].function_declarations.append(new_func_decl)
+        else:
+            self._tools.append(types.Tool(function_declarations=[new_func_decl]))
+            
+        logger.debug(f"Registered tool: {name}")
         logger.info(f"Registered tool: {name}")

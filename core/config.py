@@ -54,6 +54,13 @@ class VoiceSettings:
 
 
 @dataclass
+class PluginSettings:
+    enabled: bool = True
+    god_mode: bool = True
+    plugin_dir: str = "plugins"
+
+
+@dataclass
 class Settings:
     """Central configuration object for JARVIS."""
 
@@ -64,6 +71,7 @@ class Settings:
     memory: MemorySettings = field(default_factory=MemorySettings)
     logging: LoggingSettings = field(default_factory=LoggingSettings)
     voice: VoiceSettings = field(default_factory=VoiceSettings)
+    plugins: PluginSettings = field(default_factory=PluginSettings)
 
     # Secrets (loaded from .env, never from YAML)
     gemini_api_key: str = ""
@@ -118,6 +126,7 @@ def load_settings() -> Settings:
         memory=_build_sub_settings(MemorySettings, yaml_data.get("memory")),
         logging=_build_sub_settings(LoggingSettings, yaml_data.get("logging")),
         voice=_build_sub_settings(VoiceSettings, yaml_data.get("voice")),
+        plugins=_build_sub_settings(PluginSettings, yaml_data.get("plugins")),
         gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
     )
 
