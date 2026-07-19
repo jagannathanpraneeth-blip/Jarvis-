@@ -60,12 +60,103 @@ async def get_logs(lines: int = 50):
     except Exception as e:
         return {"logs": [f"Error reading logs: {e}"]}
 
+from pydantic import BaseModel
 
-def serve(settings, brain, host="127.0.0.1", port=8000):
+class ChatRequest(BaseModel):
+    text: str
+
+@app.post("/api/chat")
+async def post_chat(req: ChatRequest):
+    """Processes a text message from the web UI."""
+    if not _brain or not _buffer:
+        return {"response": "Error: Brain or Buffer not initialized.", "status": "error"}
+        
+    try:
+        user_input = req.text.strip()
+        history = _buffer.get_history()
+        
+        # We can simulate the state changing to 'thinking' by triggering the state manager or we just let it be blocking
+        # But `brain.think` is synchronous and blocks the async endpoint. It's okay for a local prototype.
+        response = _brain.think(user_input, history)
+        
+        # Update buffer
+        _buffer.add("user", user_input)
+        _buffer.add("assistant", response)
+        
+        # Speak the response using ElevenLabs
+        from core.tts import TTSManager
+        import threading
+        def speak_async():
+            tts = TTSManager(_settings)
+            tts.speak(response, block=True)
+            
+        threading.Thread(target=speak_async, daemon=True).start()
+        
+        return {"response": response, "status": "success"}
+    except Exception as e:
+        logger.error(f"API Chat Error: {e}", exc_info=True)
+        return {"response": f"I encountered an error: {e}", "status": "error"}
+
+from fastapi import WebSocket, WebSocketDisconnect
+from core.state import get_state, subscribe_events
+import asyncio
+
+# Global set of active websocket queues
+_active_ws_queues = set()
+
+def _on_telemetry_event(event: dict):
+    # This is called from the synchronous thread (e.g. Brain or VoiceLoop)
+    # We must put it into all active asyncio queues safely
+    for q, loop in _active_ws_queues:
+        asyncio.run_coroutine_threadsafe(q.put(event), loop)
+
+subscribe_events(_on_telemetry_event)
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    
+    # Queue for this specific connection
+    event_queue = asyncio.Queue()
+    loop = asyncio.get_running_loop()
+    
+    queue_ref = (event_queue, loop)
+    _active_ws_queues.add(queue_ref)
+    
+    last_state = None
+    
+    async def poll_state():
+        nonlocal last_state
+        while True:
+            current_state = get_state()
+            if current_state["status"] != last_state:
+                await event_queue.put({"type": "state", "state": current_state["status"]})
+                last_state = current_state["status"]
+            await asyncio.sleep(0.5)
+            
+    poll_task = asyncio.create_task(poll_state())
+    
+    try:
+        while True:
+            event = await event_queue.get()
+            await websocket.send_json(event)
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+    finally:
+        poll_task.cancel()
+        _active_ws_queues.remove(queue_ref)
+
+
+_buffer = None
+
+def serve(settings, brain, buffer, host="127.0.0.1", port=8000):
     """Entry point to start the dashboard in a background thread."""
-    global _settings, _brain
+    global _settings, _brain, _buffer
     _settings = settings
     _brain = brain
+    _buffer = buffer
     
     # Ensure static dir exists
     static_dir = Path(__file__).parent / "static"

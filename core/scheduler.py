@@ -49,15 +49,20 @@ class JARVISScheduler:
             
             if response and "IGNORE" not in response:
                 print(f"\n\n  JARVIS (Proactive): {response}\n")
-                # Append to history so he remembers he said it
-                self.buffer.add_turn("SYSTEM", prompt)
-                self.buffer.add_turn("JARVIS", response)
+                self.buffer.add("user", prompt)
+                self.buffer.add("assistant", response)
                 
-                # If voice is enabled, speak it
-                if getattr(self.settings.voice, 'enabled', False) and not getattr(self.settings.voice, 'muted', False):
-                    # We would route this to TTS, but since we are in a background thread,
-                    # we must be careful with audio locking. For now we just print it.
-                    pass
+                # If voice is enabled (or we just want to proactively speak regardless)
+                if not getattr(self.settings.voice, 'muted', False):
+                    from core.state import set_state
+                    import pyttsx3
+                    set_state("speaking")
+                    try:
+                        engine = pyttsx3.init()
+                        engine.say(response)
+                        engine.runAndWait()
+                    finally:
+                        set_state("idle")
         except Exception as e:
             logger.error(f"Proactive check failed: {e}")
 

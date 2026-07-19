@@ -47,6 +47,7 @@ class VoiceSettings:
     stt_model: str = "base.en"
     tts_engine: str = "piper"
     tts_voice: str = "en_US-lessac-medium"
+    elevenlabs_api_key: str = ""
     push_to_talk_key: str = "space"
     silence_threshold: float = 0.02
     silence_duration: float = 1.5
@@ -131,5 +132,14 @@ def load_settings() -> Settings:
         nvidia_api_key=os.getenv("NVIDIA_API_KEY", ""),
         gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
     )
+    
+    # Override voice settings from env if present
+    env_eleven_key = os.getenv("ELEVENLABS_API_KEY")
+    if env_eleven_key:
+        settings.voice.elevenlabs_api_key = env_eleven_key
+        
+    env_tts_engine = os.getenv("TTS_ENGINE")
+    if env_tts_engine:
+        settings.voice.tts_engine = env_tts_engine
 
     return settings

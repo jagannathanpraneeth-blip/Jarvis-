@@ -33,3 +33,7 @@ memory/data/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Temp
+temp/
+test_tts.py

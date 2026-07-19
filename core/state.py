@@ -45,5 +45,28 @@ def get_state() -> dict:
             return json.loads(STATE_FILE.read_text(encoding="utf-8"))
     except Exception:
         pass
-    
     return {"status": "idle", "message": "", "timestamp": 0}
+
+# ── In-Memory Event Bus for Telemetry ──
+_subscribers = []
+
+def subscribe_events(callback):
+    """Register a callback for telemetry events."""
+    _subscribers.append(callback)
+
+def emit_event(event_type: str, data: dict = None):
+    """
+    Emit an event to all subscribers.
+    Examples: 
+      emit_event('tool_call', {'name': 'browser_navigate', 'args': '{...}'})
+      emit_event('thought', {'text': 'I need to search for X...'})
+    """
+    if data is None:
+        data = {}
+    
+    event = {"type": event_type, **data, "timestamp": time.time()}
+    for callback in _subscribers:
+        try:
+            callback(event)
+        except Exception:
+            pass

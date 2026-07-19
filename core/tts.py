@@ -90,24 +90,50 @@ class PiperTTS(TTSEngine):
         self._voice = PiperVoice.load(str(model_path), str(config_path))
         logger.info("Piper voice loaded.")
         
-    def synthesize(self, text: str) -> tuple[np.ndarray, int]:
+    def synthesize(self, text: str):
         # Synthesize returns an iterator of audio chunks
         audio_stream = self._voice.synthesize_stream_raw(text)
         
-        chunks = []
-        for chunk in audio_stream:
-            # Piper outputs 16-bit PCM mono
-            audio_array = np.frombuffer(chunk, dtype=np.int16)
-            chunks.append(audio_array)
-            
-        if not chunks:
-            return np.array([], dtype=np.float32), self._voice.config.sample_rate
-            
-        audio_data = np.concatenate(chunks)
-        # Convert to float32 for sounddevice playback
-        audio_data = audio_data.astype(np.float32) / 32768.0
+        def generator():
+            for chunk in audio_stream:
+                # Piper outputs 16-bit PCM mono
+                audio_array = np.frombuffer(chunk, dtype=np.int16)
+                # Convert to float32 for sounddevice playback
+                audio_data = audio_array.astype(np.float32) / 32768.0
+                yield audio_data
         
-        return audio_data, self._voice.config.sample_rate
+        return generator(), self._voice.config.sample_rate
+
+
+class ElevenLabsTTS(TTSEngine):
+    """High-quality cloud TTS using ElevenLabs."""
+    
+    def __init__(self, api_key: str):
+        if not api_key:
+            raise ValueError("ElevenLabs API key is missing")
+        from elevenlabs.client import ElevenLabs
+        self.client = ElevenLabs(api_key=api_key)
+        
+    def synthesize(self, text: str):
+        # Synthesize via ElevenLabs (using the default voice id or a config one)
+        response = self.client.text_to_speech.convert(
+            voice_id="pNInz6obpgDQGcFmaJgB", # Adam (Free Tier Compatible Male Voice)
+            model_id="eleven_turbo_v2_5", # Faster model for conversation
+            output_format="pcm_24000",
+            text=text
+        )
+        
+        def generator():
+            for chunk in response:
+                if not chunk:
+                    continue
+                # Convert to numpy array (16-bit PCM mono)
+                audio_array = np.frombuffer(chunk, dtype=np.int16)
+                # Convert to float32 for sounddevice playback
+                audio_data = audio_array.astype(np.float32) / 32768.0
+                yield audio_data
+                
+        return generator(), 24000
 
 
 class TTSManager:
@@ -118,7 +144,13 @@ class TTSManager:
         self._engine: TTSEngine
         self._is_playing = False
         
-        if settings.voice.tts_engine == "piper":
+        if settings.voice.tts_engine == "elevenlabs":
+            try:
+                self._engine = ElevenLabsTTS(settings.voice.elevenlabs_api_key)
+            except Exception as e:
+                logger.error(f"Failed to load ElevenLabsTTS, falling back to SystemTTS: {e}")
+                self._engine = SystemTTS()
+        elif settings.voice.tts_engine == "piper":
             try:
                 self._engine = PiperTTS(settings.voice.tts_voice)
             except Exception as e:
@@ -136,24 +168,35 @@ class TTSManager:
         start_time = time.time()
         
         try:
-            audio_data, sample_rate = self._engine.synthesize(text)
-            elapsed = time.time() - start_time
-            logger.info(f"Synthesis complete in {elapsed:.2f}s")
-            
-            if len(audio_data) > 0:
-                self._play_audio(audio_data, sample_rate, block)
+            audio_source, sample_rate = self._engine.synthesize(text)
+            self._play_audio(audio_source, sample_rate, block, start_time)
                 
         except Exception as e:
             logger.error(f"TTS error: {e}", exc_info=True)
             
-    def _play_audio(self, audio_data: np.ndarray, sample_rate: int, block: bool):
+    def _play_audio(self, audio_source, sample_rate: int, block: bool, start_time: float):
         self._is_playing = True
         
         def _play():
             try:
-                sd.play(audio_data, sample_rate)
-                if block:
-                    sd.wait()
+                if isinstance(audio_source, np.ndarray):
+                    if len(audio_source) == 0:
+                        return
+                    logger.info(f"TTS time to first byte: {time.time() - start_time:.2f}s")
+                    sd.play(audio_source, sample_rate)
+                    if block:
+                        sd.wait()
+                else:
+                    # It's a generator, we stream it
+                    first_chunk = True
+                    with sd.OutputStream(samplerate=sample_rate, channels=1, dtype='float32') as stream:
+                        for chunk in audio_source:
+                            if not self._is_playing:
+                                break
+                            if first_chunk:
+                                logger.info(f"TTS time to first byte: {time.time() - start_time:.2f}s")
+                                first_chunk = False
+                            stream.write(chunk)
             except sd.PortAudioError as e:
                 logger.error(f"Audio playback error: {e}")
             finally:

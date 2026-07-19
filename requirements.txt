@@ -32,3 +32,8 @@ psutil>=5.9.0
 
 # JARVIS — Phase 9 dependencies (Camera Vision)
 opencv-python>=4.8.0
+elevenlabs>=0.3.0
+
+pyautogui
+
+pywebview

@@ -25,9 +25,10 @@ logger = get_logger("voice")
 
 
 class VoiceLoop:
-    def __init__(self, settings: Settings, brain: Brain):
+    def __init__(self, settings: Settings, brain: Brain, buffer):
         self.settings = settings
         self.brain = brain
+        self.buffer = buffer
         self._running = False
         
         # Audio capturing state
@@ -98,7 +99,7 @@ class VoiceLoop:
         """Callback from pynput."""
         if self._is_recording:
             return
-            
+        
         logger.info("Push-to-talk triggered.")
         self._barge_in()
         self._start_recording()
@@ -106,14 +107,12 @@ class VoiceLoop:
     def _on_ptt_released(self):
         """Callback from pynput."""
         if self._is_recording:
-            logger.info("Push-to-talk released.")
             self._stop_recording()
             
     def _barge_in(self):
-        """Stop TTS playback if active."""
+        """Interrupts current processing/speech."""
         if self.tts.is_playing:
             self.tts.stop()
-            logger.info("Barge-in: TTS stopped.")
             
     def _play_chime(self):
         """Play a short beep to indicate listening."""
@@ -138,59 +137,47 @@ class VoiceLoop:
         data = indata.astype(np.float32) / 32768.0
         return math.sqrt(np.mean(data**2))
 
-    def _audio_callback(self, indata, frames, time_info, status):
-        """sounddevice callback during active recording."""
-        if status:
-            logger.warning(f"Audio callback status: {status}")
-            
-        if not self._is_recording:
-            return
-            
-        data = indata.copy()
-        self._audio_buffer.append(data)
-        
-        # Check for silence (only if not holding PTT)
-        if not self._ptt_pressed:
-            rms = self._calculate_rms(data)
-            
-            if rms < self.settings.voice.silence_threshold:
-                if self._silence_start is None:
-                    self._silence_start = time.time()
-                elif time.time() - self._silence_start > self.settings.voice.silence_duration:
-                    # Queue a message to stop recording on the main thread
-                    self._audio_queue.put("SILENCE_TIMEOUT")
-            else:
-                self._silence_start = None
-
     def _start_recording(self):
-        """Transition from wake-word listening to active recording."""
-        # Stop wake word detector temporarily
         self.wake_word.stop()
-        
         self._is_recording = True
         self._audio_buffer = []
         self._silence_start = None
         
-        self._play_chime()
-        logger.info("Listening...")
-        
-        # Start recording stream
-        # STT models expect 16kHz mono
+        # Audio callback
+        def callback(indata, frames, time, status):
+            if status:
+                logger.warning(f"Sounddevice status: {status}")
+            
+            # Simple VAD (Voice Activity Detection) based on RMS energy
+            rms = np.sqrt(np.mean(indata**2))
+            
+            # Append audio data
+            self._audio_buffer.append(indata.copy())
+            
+            # Silence timeout (auto-stop)
+            # Threshold tuned for typical microphone noise
+            if rms < 0.01:
+                if self._silence_start is None:
+                    self._silence_start = time.currentTime
+                elif time.currentTime - self._silence_start > self.settings.voice.silence_timeout:
+                    self._audio_queue.put("SILENCE_TIMEOUT")
+            else:
+                self._silence_start = None
+                
         try:
             self.stream = sd.InputStream(
-                samplerate=16000,
-                channels=1,
-                dtype="int16",
-                callback=self._audio_callback
+                samplerate=16000, 
+                channels=1, 
+                callback=callback
             )
             self.stream.start()
+            logger.info("Listening...")
         except Exception as e:
-            logger.error(f"Failed to start recording stream: {e}")
+            logger.error(f"Failed to start recording: {e}")
             self._is_recording = False
             self.wake_word.start_listening()
 
     def _stop_recording(self):
-        """Stop active recording and process audio."""
         if not self._is_recording:
             return
             
@@ -231,7 +218,11 @@ class VoiceLoop:
             # We don't want to block voice interface completely if we hit a quota limit,
             # but we'll let the Brain's built-in retry logic handle temporary 429s.
             try:
-                response = self.brain.think(text)
+                history = self.buffer.get_history()
+                response = self.brain.think(text, history)
+                self.buffer.add("user", text)
+                self.buffer.add("assistant", response)
+                
                 print(f"JARVIS: {response}\n")
                 
                 # 3. Text to Speech

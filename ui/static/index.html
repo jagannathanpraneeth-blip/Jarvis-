@@ -3,29 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS Core Interface</title>
+    <title>J.A.R.V.I.S. | Stark Industries HUD</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --neon-cyan: #00e5ff;
-            --neon-cyan-dim: rgba(0, 229, 255, 0.2);
-            --neon-cyan-glow: rgba(0, 229, 255, 0.6);
-            --bg-color: #030710;
+            --neon-cyan: #00f3ff;
+            --neon-cyan-dim: rgba(0, 243, 255, 0.15);
+            --neon-cyan-glow: rgba(0, 243, 255, 0.7);
+            --neon-alert: #ff2a2a;
+            --bg-color: rgba(1, 6, 14, 0.6);
+            --panel-bg: rgba(0, 25, 45, 0.4);
         }
 
         * {
             box-sizing: border-box;
             user-select: none;
+            margin: 0;
+            padding: 0;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(circle at center, rgba(0, 229, 255, 0.05) 0%, transparent 60%);
+            background-color: transparent;
             color: var(--neon-cyan);
             font-family: 'Rajdhani', sans-serif;
             height: 100vh;
@@ -35,295 +35,540 @@
             justify-content: center;
         }
 
-        /* Ambient Background Grid */
-        .grid-bg {
+        /* Ambient Blueprint Grid */
+        .blueprint-grid {
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+            inset: 0;
             background-image: 
-                linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 229, 255, 0.05) 1px, transparent 1px);
-            background-size: 50px 50px;
-            z-index: -1;
-            perspective: 1000px;
-            transform-origin: center;
-            animation: grid-pulse 10s infinite alternate;
+                linear-gradient(rgba(0, 243, 255, 0.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.07) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: 1;
         }
 
-        @keyframes grid-pulse {
-            0% { opacity: 0.3; transform: scale(1); }
-            100% { opacity: 0.8; transform: scale(1.05); }
+        .blueprint-grid::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 30%, var(--bg-color) 90%);
         }
 
-        /* ─── ARC REACTOR CORE ─── */
-        .arc-container {
+        /* Scanning CRT Line */
+        .scanline {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: rgba(0, 243, 255, 0.2);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+            z-index: 100;
+            opacity: 0.6;
+            animation: scan 4s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: -10%; }
+            100% { top: 110%; }
+        }
+
+        /* Main Layout Grid */
+        .hud-container {
             position: relative;
-            width: 500px;
-            height: 500px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            padding: 40px;
+            gap: 20px;
         }
 
-        .ring {
-            position: absolute;
-            border-radius: 50%;
-            border: 2px solid var(--neon-cyan-dim);
-        }
-
-        /* Outer Rotating Ring */
-        .ring-outer {
-            width: 450px;
-            height: 450px;
-            border-top: 4px solid var(--neon-cyan);
-            border-bottom: 4px solid var(--neon-cyan);
-            animation: spin 8s linear infinite;
-            box-shadow: 0 0 20px var(--neon-cyan-dim);
-        }
-
-        /* Middle Dashed Ring */
-        .ring-middle {
-            width: 380px;
-            height: 380px;
-            border: 2px dashed var(--neon-cyan);
-            animation: spin-reverse 12s linear infinite;
-            opacity: 0.7;
-        }
-
-        /* Inner Energy Core */
-        .energy-core {
-            width: 250px;
-            height: 250px;
-            background: radial-gradient(circle, #fff 0%, var(--neon-cyan) 40%, transparent 70%);
-            border-radius: 50%;
-            box-shadow: 0 0 50px var(--neon-cyan-glow), inset 0 0 30px #fff;
-            animation: pulse-idle 4s ease-in-out infinite;
+        /* Side Panels */
+        .side-panel {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.5s ease;
-        }
-
-        /* Core State Label */
-        .core-state {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
-            font-weight: 900;
-            letter-spacing: 4px;
-            color: #fff;
-            text-shadow: 0 0 10px var(--neon-cyan);
+            flex-direction: column;
+            gap: 20px;
             z-index: 20;
-            text-transform: uppercase;
         }
 
-        /* Core Animations based on State */
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes spin-reverse { 100% { transform: rotate(-360deg); } }
-        
-        @keyframes pulse-idle {
-            0% { transform: scale(1); box-shadow: 0 0 50px var(--neon-cyan-glow); }
-            50% { transform: scale(1.05); box-shadow: 0 0 80px rgba(0, 229, 255, 0.8); }
-            100% { transform: scale(1); box-shadow: 0 0 50px var(--neon-cyan-glow); }
-        }
-
-        /* ─── HOLOGRAPHIC TELEMETRY PANELS ─── */
-        .panel {
-            position: absolute;
-            background: rgba(0, 20, 30, 0.4);
+        .hologram-box {
+            background: var(--panel-bg);
             border: 1px solid var(--neon-cyan-dim);
-            backdrop-filter: blur(10px);
+            border-top: 3px solid var(--neon-cyan);
+            border-bottom: 1px solid var(--neon-cyan);
             padding: 20px;
-            width: 300px;
-            clip-path: polygon(0 0, 90% 0, 100% 10%, 100% 100%, 10% 100%, 0 90%);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 243, 255, 0.05);
+            backdrop-filter: blur(4px);
+            position: relative;
+            overflow: hidden;
         }
 
-        .panel::before {
-            content: '';
+        .hologram-box::before {
+            content: "";
             position: absolute;
             top: 0; left: 0;
-            width: 3px; height: 100%;
-            background: var(--neon-cyan);
-            box-shadow: 0 0 10px var(--neon-cyan);
+            width: 30px; height: 30px;
+            border-top: 2px solid var(--neon-cyan);
+            border-left: 2px solid var(--neon-cyan);
         }
 
-        .panel-left { left: 50px; top: 50%; transform: translateY(-50%); }
-        .panel-right { right: 50px; top: 50%; transform: translateY(-50%); }
-        .panel-top { top: 30px; left: 50%; transform: translateX(-50%); width: 400px; text-align: center; }
+        .hologram-box::after {
+            content: "";
+            position: absolute;
+            bottom: 0; right: 0;
+            width: 30px; height: 30px;
+            border-bottom: 2px solid var(--neon-cyan);
+            border-right: 2px solid var(--neon-cyan);
+        }
 
         .panel-title {
             font-family: 'Orbitron', sans-serif;
-            font-size: 0.9rem;
-            color: rgba(255,255,255,0.7);
-            letter-spacing: 2px;
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
             margin-bottom: 15px;
+            color: #fff;
+            text-shadow: 0 0 5px var(--neon-cyan);
             border-bottom: 1px solid var(--neon-cyan-dim);
             padding-bottom: 5px;
         }
 
-        .stat-row {
+        .data-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 12px;
-            font-size: 1.1rem;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            font-family: monospace;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .data-value {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 5px var(--neon-cyan);
+        }
+
+        /* Center Arc Reactor / Targeting System */
+        .center-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .arc-container {
+            position: relative;
+            width: 550px;
+            height: 550px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* High-Tech Rings */
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        /* Outer Targeting Reticle */
+        .ring-targeting {
+            width: 520px;
+            height: 520px;
+            border: 1px solid var(--neon-cyan-dim);
+            background-image: conic-gradient(from 0deg, transparent 0deg 85deg, var(--neon-cyan) 85deg 95deg, transparent 95deg 360deg);
+            animation: spin-slow 15s linear infinite;
+        }
+
+        .ring-targeting-reverse {
+            width: 480px;
+            height: 480px;
+            border: 2px dashed rgba(0, 243, 255, 0.3);
+            animation: spin-reverse 20s linear infinite;
+        }
+
+        /* Inner Energy Rings */
+        .ring-outer {
+            width: 420px;
+            height: 420px;
+            border: 2px solid transparent;
+            border-top: 4px solid var(--neon-cyan);
+            border-bottom: 4px solid var(--neon-cyan);
+            border-radius: 50%;
+            animation: spin 8s linear infinite;
+            box-shadow: 0 0 15px var(--neon-cyan-dim);
+        }
+
+        .ring-middle {
+            width: 360px;
+            height: 360px;
+            border: 3px dotted var(--neon-cyan);
+            animation: spin-reverse 12s linear infinite;
+            opacity: 0.8;
+        }
+
+        /* Core Heart */
+        .energy-core {
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, #ffffff 0%, var(--neon-cyan) 30%, rgba(0, 243, 255, 0.1) 70%, transparent 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 60px var(--neon-cyan-glow), inset 0 0 30px #fff;
+            animation: pulse-idle 4s ease-in-out infinite;
+            z-index: 50;
+        }
+
+        /* Audio Visualizer Rings */
+        .ring-audio {
+            width: 260px;
+            height: 260px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 20px #fff;
+            animation: pulse-idle 4s ease-in-out infinite;
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        /* Voice State Animations */
+        body.state-listening .ring-audio {
+            opacity: 1;
+            border-color: #fff;
+            box-shadow: 0 0 30px #fff, 0 0 50px var(--neon-cyan);
+            animation: ping-listen 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+
+        body.state-speaking .energy-core {
+            animation: pulse-speak 0.4s ease-in-out infinite alternate;
+            background: radial-gradient(circle, #ffffff 0%, var(--neon-cyan) 50%, transparent 80%);
+            box-shadow: 0 0 100px var(--neon-cyan-glow), inset 0 0 50px #fff;
+        }
+
+        body.state-speaking .ring-audio {
+            opacity: 1;
+            border: 4px solid var(--neon-cyan);
+            animation: pulse-speak-ring 0.4s ease-in-out infinite alternate;
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes spin-reverse { 100% { transform: rotate(-360deg); } }
+        @keyframes spin-slow { 100% { transform: rotate(360deg); } }
+
+        @keyframes pulse-idle {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+
+        @keyframes pulse-speak {
+            0% { transform: scale(1); opacity: 0.9; }
+            100% { transform: scale(1.15); opacity: 1; }
+        }
+
+        @keyframes pulse-speak-ring {
+            0% { transform: scale(1.05); }
+            100% { transform: scale(1.25); box-shadow: 0 0 40px var(--neon-cyan); }
+        }
+
+        @keyframes ping-listen {
+            75%, 100% { transform: scale(1.8); opacity: 0; }
+        }
+
+        /* Voice Transcription Subtitle */
+        .subtitle-container {
+            position: absolute;
+            bottom: -90px;
+            width: 100%;
+            text-align: center;
+            font-size: 1.2rem;
             font-weight: 600;
+            color: #fff;
+            text-shadow: 0 0 10px var(--neon-cyan);
+            letter-spacing: 1px;
+            min-height: 40px;
+            background: rgba(0, 20, 40, 0.6);
+            border: 1px solid var(--neon-cyan-dim);
+            border-radius: 4px;
+            padding: 10px;
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            transition: opacity 0.3s;
         }
 
-        .stat-label { color: rgba(255,255,255,0.5); }
-        .stat-value { text-shadow: 0 0 8px var(--neon-cyan-dim); }
-        .value-warn { color: #ff3366; text-shadow: 0 0 8px rgba(255, 51, 102, 0.5); }
+        body.state-listening .subtitle-container,
+        body.state-speaking .subtitle-container {
+            opacity: 1;
+        }
 
-        /* Camera Feed Hidden Panel */
-        #camera-panel {
-            display: none; /* Only show when activated */
-            bottom: 40px;
-            right: 50px;
-            top: auto;
-            transform: none;
+        /* Live Data Streams */
+        .data-stream {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--neon-cyan-dim);
+            white-space: pre;
+            overflow: hidden;
+            height: 150px;
+        }
+        
+        /* Hexagon Grid Background Element */
+        .hex-overlay {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background-image: url('data:image/svg+xml;utf8,<svg width="40" height="40" xmlns="http://www.w3.org/2000/svg"><path d="M20 0 L40 10 L40 30 L20 40 L0 30 L0 10 Z" fill="none" stroke="rgba(0, 243, 255, 0.1)" stroke-width="1"/></svg>');
+            background-size: 40px 40px;
+            opacity: 0.5;
+            mask-image: radial-gradient(circle, black 30%, transparent 70%);
+            -webkit-mask-image: radial-gradient(circle, black 30%, transparent 70%);
+            z-index: 1;
+            animation: spin-slow 40s linear infinite;
+        }
+
+        /* Dedicated Text Override Interface */
+        .comm-link-container {
+            position: fixed;
+            bottom: 30px;
+            right: 40px;
             width: 350px;
-            height: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 100;
         }
+
+        .chat-log {
+            background: rgba(0, 15, 30, 0.8);
+            border: 1px solid var(--neon-cyan-dim);
+            border-top: 2px solid var(--neon-cyan);
+            height: 200px;
+            padding: 15px;
+            overflow-y: auto;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.95rem;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .chat-msg {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .msg-user { align-items: flex-end; color: rgba(255,255,255,0.7); }
+        .msg-jarvis { align-items: flex-start; color: var(--neon-cyan); text-shadow: 0 0 5px var(--neon-cyan-dim); }
+
+        .chat-log::-webkit-scrollbar { width: 4px; }
+        .chat-log::-webkit-scrollbar-thumb { background: var(--neon-cyan); }
+
+        #chat-input {
+            width: 100%;
+            background: rgba(0, 25, 45, 0.8);
+            border: 1px solid var(--neon-cyan-dim);
+            border-bottom: 2px solid var(--neon-cyan);
+            padding: 12px 15px;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            outline: none;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        #chat-input:focus {
+            box-shadow: 0 0 20px var(--neon-cyan-glow);
+            background: rgba(0, 45, 75, 0.9);
+            border-color: var(--neon-cyan);
+        }
+
+        #chat-input::placeholder {
+            color: var(--neon-cyan-dim);
+            letter-spacing: 1px;
+        }
+
     </style>
 </head>
-<body>
+<body class="state-idle">
+    <div class="blueprint-grid"></div>
+    <div class="scanline"></div>
 
-    <div class="grid-bg"></div>
+    <div class="hud-container">
+        
+        <!-- Left Data Panels -->
+        <div class="side-panel">
+            <div class="hologram-box">
+                <div class="panel-title">System Diagnostics</div>
+                <div class="data-row"><span>CORE TEMP:</span> <span class="data-value" id="val-temp">42°C</span></div>
+                <div class="data-row"><span>MEMORY ALLOC:</span> <span class="data-value" id="val-mem">14.2 GB</span></div>
+                <div class="data-row"><span>NEURAL NET:</span> <span class="data-value">STABLE</span></div>
+                <div class="data-row"><span>UPLINK:</span> <span class="data-value" id="val-ping">12ms</span></div>
+            </div>
 
-    <!-- Top Branding -->
-    <div class="panel panel-top">
-        <h1 style="margin:0; font-family: 'Orbitron'; font-size: 2rem; letter-spacing: 8px;">J.A.R.V.I.S.</h1>
-        <div style="font-size: 0.9rem; letter-spacing: 3px; color: rgba(255,255,255,0.5);">AUTONOMOUS AI MATRIX</div>
+            <div class="hologram-box">
+                <div class="panel-title">Telemetry Stream</div>
+                <div class="data-stream" id="telemetry-log">
+SYS.INIT... OK
+MEM.CHECK... PASS
+NET.SYNC... ESTABLISHED
+AWAITING INPUT...
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Arc Reactor -->
+        <div class="center-stage">
+            <div class="arc-container">
+                <div class="hex-overlay"></div>
+                <div class="ring ring-targeting"></div>
+                <div class="ring ring-targeting-reverse"></div>
+                <div class="ring ring-outer"></div>
+                <div class="ring ring-middle"></div>
+                <div class="ring ring-audio"></div>
+                <div class="ring energy-core"></div>
+                
+                <div class="subtitle-container" id="subtitle-text">
+                    Standing by, Sir.
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Data Panels -->
+        <div class="side-panel">
+            <div class="hologram-box">
+                <div class="panel-title">Targeting & Vision</div>
+                <div class="data-row"><span>OPTICS:</span> <span class="data-value">OFFLINE</span></div>
+                <div class="data-row"><span>TRACKING:</span> <span class="data-value">IDLE</span></div>
+                <div class="data-row"><span>LATITUDE:</span> <span class="data-value">34.0522° N</span></div>
+                <div class="data-row"><span>LONGITUDE:</span> <span class="data-value">118.2437° W</span></div>
+            </div>
+
+            <div class="hologram-box">
+                <div class="panel-title">Power Grid</div>
+                <div class="data-row"><span>MAIN REACTOR:</span> <span class="data-value">98%</span></div>
+                <div class="data-row"><span>AUX POWER:</span> <span class="data-value">STANDBY</span></div>
+                <div class="data-row"><span>OUTPUT:</span> <span class="data-value" id="val-power">3.2 GJ/s</span></div>
+            </div>
+        </div>
     </div>
 
-    <!-- Left Telemetry -->
-    <div class="panel panel-left">
-        <div class="panel-title">SYSTEM PROTOCOLS</div>
-        
-        <div class="stat-row">
-            <span class="stat-label">NEURAL ENGINE</span>
-            <span class="stat-value" id="stat-model">NEMOTRON</span>
+    <!-- Dedicated Chat Interface -->
+    <div class="comm-link-container">
+        <div class="panel-title" style="margin-bottom: 0;">NEURAL COMM-LINK</div>
+        <div class="chat-log" id="chat-log">
+            <div class="chat-msg msg-jarvis"><span>J.A.R.V.I.S. online. Text override ready.</span></div>
         </div>
-        
-        <div class="stat-row">
-            <span class="stat-label">GOD MODE</span>
-            <span class="stat-value" id="stat-godmode">INACTIVE</span>
-        </div>
-        
-        <div class="stat-row">
-            <span class="stat-label">VOICE SYNTHESIS</span>
-            <span class="stat-value" id="stat-voice">ONLINE</span>
-        </div>
-        
-        <div class="stat-row" style="margin-top: 20px;">
-            <span class="stat-label">UPLINK</span>
-            <span class="stat-value" id="conn-status">STABLE</span>
-        </div>
-    </div>
-
-    <!-- Central Arc Reactor -->
-    <div class="arc-container">
-        <div class="ring ring-outer"></div>
-        <div class="ring ring-middle"></div>
-        <div class="energy-core" id="core">
-            <div class="core-state" id="core-state">IDLE</div>
-        </div>
-    </div>
-
-    <!-- Right Telemetry -->
-    <div class="panel panel-right">
-        <div class="panel-title">ENVIRONMENT</div>
-        
-        <div class="stat-row">
-            <span class="stat-label">SUB-ROUTINES</span>
-            <span class="stat-value">OPERATIONAL</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-label">PERSISTENCE</span>
-            <span class="stat-value">ACTIVE</span>
-        </div>
-        <div class="stat-row">
-            <span class="stat-label">OPTICAL SENSOR</span>
-            <span class="stat-value">STANDBY</span>
-        </div>
-    </div>
-
-    <!-- Future Video Panel -->
-    <div class="panel" id="camera-panel">
-        <div class="panel-title">LIVE OPTICAL FEED</div>
-        <div style="width: 100%; height: calc(100% - 40px); background: #000; border: 1px solid var(--neon-cyan-dim); display: flex; align-items: center; justify-content: center;">
-            [FEED OFFLINE]
-        </div>
+        <input type="text" id="chat-input" placeholder="INITIATE TEXT INPUT..." autocomplete="off">
     </div>
 
     <script>
-        const core = document.getElementById('core');
-        const coreStateText = document.getElementById('core-state');
+        const ws = new WebSocket(`ws://${location.host}/ws`);
+        const subtitleText = document.getElementById('subtitle-text');
+        const telemetryLog = document.getElementById('telemetry-log');
+        const chatLog = document.getElementById('chat-log');
         
-        async function fetchState() {
-            try {
-                // Fetch internal status config
-                const statusRes = await fetch('/api/status');
-                const statusData = await statusRes.json();
-                
-                // Update UI panels
-                document.getElementById('stat-model').textContent = statusData.model.split('/')[1] || statusData.model;
-                
-                const gmEl = document.getElementById('stat-godmode');
-                gmEl.textContent = statusData.god_mode ? "ACTIVE" : "RESTRICTED";
-                gmEl.className = statusData.god_mode ? "stat-value value-warn" : "stat-value";
-                
-                const voiceEl = document.getElementById('stat-voice');
-                voiceEl.textContent = statusData.muted ? "MUTED" : "ONLINE";
-                voiceEl.className = statusData.muted ? "stat-value value-warn" : "stat-value";
-                
-                document.getElementById('conn-status').textContent = "STABLE";
-                document.getElementById('conn-status').style.color = "var(--neon-cyan)";
-                
-                // Determine JARVIS visual state (idle, listening, thinking, speaking)
-                // We'll read this from a new IPC state file via API or logs. 
-                // For now, if logs are actively streaming, we simulate thinking.
-                // In Phase 9, we can expose `/api/state` from the cross-process temp file.
-                
-                const stateRes = await fetch('/api/state').catch(() => null);
-                if (stateRes) {
-                    const stateData = await stateRes.json();
-                    updateCore(stateData.status.toUpperCase());
-                } else {
-                    updateCore("IDLE");
-                }
-
-            } catch (err) {
-                document.getElementById('conn-status').textContent = "DISCONNECTED";
-                document.getElementById('conn-status').className = "stat-value value-warn";
-                updateCore("OFFLINE");
-            }
+        function appendChat(role, text) {
+            const div = document.createElement('div');
+            div.className = `chat-msg msg-${role}`;
+            div.innerHTML = `<span>${text}</span>`;
+            chatLog.appendChild(div);
+            chatLog.scrollTop = chatLog.scrollHeight;
         }
-        
-        function updateCore(state) {
-            coreStateText.textContent = state;
+
+        // Simulate fluctuating telemetry data
+        setInterval(() => {
+            document.getElementById('val-temp').innerText = (40 + Math.random() * 5).toFixed(1) + '°C';
+            document.getElementById('val-mem').innerText = (14 + Math.random() * 1).toFixed(1) + ' GB';
+            document.getElementById('val-ping').innerText = Math.floor(10 + Math.random() * 15) + 'ms';
+            document.getElementById('val-power').innerText = (3.0 + Math.random() * 0.5).toFixed(2) + ' GJ/s';
             
-            if (state === "THINKING") {
-                core.style.background = "radial-gradient(circle, #fff 0%, #ffaa00 40%, transparent 70%)";
-                core.style.boxShadow = "0 0 80px rgba(255, 170, 0, 0.8), inset 0 0 30px #fff";
-                core.style.animationDuration = "0.5s";
-            } else if (state === "SPEAKING") {
-                core.style.background = "radial-gradient(circle, #fff 0%, #0066ff 40%, transparent 70%)";
-                core.style.boxShadow = "0 0 100px rgba(0, 102, 255, 0.9), inset 0 0 30px #fff";
-                core.style.animationDuration = "0.2s";
-            } else if (state === "LISTENING") {
-                core.style.background = "radial-gradient(circle, #fff 0%, #00ff66 40%, transparent 70%)";
-                core.style.boxShadow = "0 0 60px rgba(0, 255, 102, 0.7), inset 0 0 30px #fff";
-                core.style.animationDuration = "2s";
-            } else {
-                // Idle / Offline
-                core.style.background = "radial-gradient(circle, #fff 0%, var(--neon-cyan) 40%, transparent 70%)";
-                core.style.boxShadow = "0 0 50px var(--neon-cyan-glow), inset 0 0 30px #fff";
-                core.style.animationDuration = "4s";
+            // Add random hex data to telemetry log
+            if(Math.random() > 0.5) {
+                const hex = Math.floor(Math.random()*16777215).toString(16).toUpperCase();
+                telemetryLog.innerHTML += `\n0x${hex} DATA_CHUNK_RECV`;
+                if(telemetryLog.innerText.split('\n').length > 10) {
+                    telemetryLog.innerHTML = telemetryLog.innerText.substring(telemetryLog.innerText.indexOf('\n') + 1);
+                }
             }
-        }
+        }, 1000);
 
-        // Poll every 500ms
-        setInterval(fetchState, 500);
-        fetchState();
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log("HUD Event:", data);
+
+            if (data.type === "state") {
+                document.body.className = `state-${data.state}`;
+                
+                if (data.state === "listening") {
+                    subtitleText.innerText = "Listening...";
+                    telemetryLog.innerHTML += `\n>> AUDIO INPUT DETECTED`;
+                } else if (data.state === "thinking") {
+                    subtitleText.innerText = "Processing...";
+                    telemetryLog.innerHTML += `\n>> NEURAL NET PROCESSING`;
+                } else if (data.state === "idle") {
+                    subtitleText.innerText = "Standing by.";
+                }
+            } else if (data.type === "speaking") {
+                subtitleText.innerText = data.text;
+                telemetryLog.innerHTML += `\n<< AUDIO OUT: ${data.text.substring(0, 15)}...`;
+            } else if (data.type === "thought") {
+                telemetryLog.innerHTML += `\n[NEURAL LOG] ${data.text.substring(0, 40)}...`;
+            } else if (data.type === "tool_call") {
+                telemetryLog.innerHTML += `\n[ACTION EXECUTING] ${data.name}`;
+                try {
+                    const argsStr = JSON.stringify(data.args);
+                    telemetryLog.innerHTML += `\n  -> ${argsStr}`;
+                } catch(e) {}
+            } else if (data.type === "tool_result") {
+                telemetryLog.innerHTML += `\n[ACTION SUCCESS] ${data.name}`;
+            } else if (data.type === "tool_error") {
+                telemetryLog.innerHTML += `\n[ACTION FAILED] ${data.error}`;
+            }
+        };
+
+        ws.onclose = function() {
+            subtitleText.innerText = "DISCONNECTED";
+            document.body.className = "state-idle";
+            telemetryLog.innerHTML += `\n[CRITICAL] UPLINK LOST`;
+            document.documentElement.style.setProperty('--neon-cyan', 'var(--neon-alert)');
+        };
+
+        const chatInput = document.getElementById('chat-input');
+        chatInput.addEventListener('keypress', async function(e) {
+            if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+                const text = chatInput.value.trim();
+                chatInput.value = '';
+                
+                appendChat('user', text);
+                
+                // Show user input in telemetry
+                telemetryLog.innerHTML += `\n>> USER TEXT: ${text}`;
+                document.body.className = 'state-thinking';
+                
+                try {
+                    const response = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: text })
+                    });
+                    const data = await response.json();
+                    
+                    if(data.status === 'success') {
+                        appendChat('jarvis', data.response);
+                        telemetryLog.innerHTML += `\n<< JARVIS: ${data.response.substring(0, 30)}...`;
+                    } else {
+                        telemetryLog.innerHTML += `\n[ERROR] TEXT OVERRIDE FAILED`;
+                    }
+                } catch(err) {
+                    telemetryLog.innerHTML += `\n[ERROR] NETWORK TIMEOUT`;
+                }
+                
+                setTimeout(() => { document.body.className = 'state-idle'; }, 3000);
+            }
+        });
     </script>
 </body>
 </html>

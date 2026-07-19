@@ -11,7 +11,7 @@ import json
 import time
 from datetime import datetime
 from typing import Any, Callable
-from core.state import set_state
+from core.state import set_state, emit_event
 
 from openai import OpenAI, AsyncOpenAI
 
@@ -125,12 +125,15 @@ class Brain:
             message = response.choices[0].message
             
             # Print reasoning if available (for UI/CLI)
-            # OpenAI python object might parse this differently or store it as an attribute if extended
-            # We'll use getattr or dict access safely
+            reasoning = None
             if hasattr(message, "model_extra") and message.model_extra and "reasoning_content" in message.model_extra:
-                print(f"\n[Thinking]\n{message.model_extra['reasoning_content']}\n")
+                reasoning = message.model_extra['reasoning_content']
             elif hasattr(message, "reasoning_content") and getattr(message, "reasoning_content"):
-                print(f"\n[Thinking]\n{getattr(message, 'reasoning_content')}\n")
+                reasoning = getattr(message, 'reasoning_content')
+                
+            if reasoning:
+                print(f"\n[Thinking]\n{reasoning}\n")
+                emit_event('thought', {'text': reasoning})
 
             if not message.tool_calls:
                 set_state("idle")
@@ -148,18 +151,22 @@ class Brain:
                     tool_args = {}
 
                 logger.info(f"Tool call: {tool_name}({tool_args})")
+                emit_event('tool_call', {'name': tool_name, 'args': tool_args})
 
                 handler = self._tool_handlers.get(tool_name)
                 if handler:
                     try:
                         result = handler(**tool_args)
                         logger.info(f"Tool result: {tool_name} -> {str(result)[:100]}")
+                        emit_event('tool_result', {'name': tool_name, 'result': str(result)[:200]})
                     except Exception as e:
                         result = f"Error executing {tool_name}: {e}"
                         logger.error(result)
+                        emit_event('tool_error', {'name': tool_name, 'error': str(e)})
                 else:
                     result = f"Tool '{tool_name}' is not available."
                     logger.warning(result)
+                    emit_event('tool_error', {'name': tool_name, 'error': result})
 
                 # Add tool response to messages
                 messages.append({

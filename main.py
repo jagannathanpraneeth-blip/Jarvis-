@@ -79,7 +79,7 @@ def main() -> None:
     # 2. Web Dashboard
     dashboard_thread = threading.Thread(
         target=serve_dashboard, 
-        args=(settings, brain), 
+        args=(settings, brain, buffer), 
         daemon=True
     )
     dashboard_thread.start()
@@ -97,53 +97,41 @@ def main() -> None:
     if args.voice:
         logger.info("Starting JARVIS in VOICE mode")
         try:
-            loop = VoiceLoop(settings, brain)
-            loop.start()
+            loop = VoiceLoop(settings, brain, buffer)
+            threading.Thread(target=loop.start, daemon=True).start()
         except Exception as e:
             logger.error(f"Voice loop error: {e}", exc_info=True)
-    else:
-        logger.info("Entering text chat loop.")
-        # ── Text Chat loop ──
+
+    logger.info("Starting Desktop GUI...")
+    # Give the web server a moment to spin up
+    import time; time.sleep(1)
+    
+    try:
+        import webview
+        # Create the native window pointing to the local dashboard
+        window = webview.create_window(
+            "J.A.R.V.I.S.", 
+            "http://127.0.0.1:8000/", 
+            frameless=True,
+            transparent=True,
+            width=1200, 
+            height=800
+        )
+        # Start the webview loop (this blocks until the window is closed)
+        webview.start()
+    except Exception as e:
+        logger.error(f"Failed to start GUI: {e}")
+        # Fallback to text mode if GUI fails
         try:
             while True:
-                try:
-                    user_input = input(f"  {settings.user_name} > ").strip()
-                except EOFError:
-                    break
-    
-                if not user_input:
-                    continue
-    
-                if user_input.lower() in ("quit", "exit"):
-                    print(f"\n  {settings.assistant_name}: Until next time, {settings.user_name}.\n")
-                    break
-    
-                if user_input.lower() == "clear":
-                    buffer.clear()
-                    print(f"  {settings.assistant_name}: Conversation history cleared.\n")
-                    continue
-    
-                # Send to brain with conversation history
-                logger.info(f"User: {user_input}")
-                history = buffer.get_history()
-    
-                try:
-                    response = brain.think(user_input, history)
-                except Exception as e:
-                    logger.error(f"Brain error: {e}", exc_info=True)
-                    response = f"I encountered an error: {e}"
-    
-                # Update conversation buffer
-                buffer.add("user", user_input)
-                buffer.add("assistant", response)
-    
-                # Display response
+                user_input = input(f"  {settings.user_name} > ").strip()
+                if not user_input: continue
+                if user_input.lower() in ("quit", "exit"): break
+                response = brain.think(user_input, buffer.get_history())
+                buffer.add("user", user_input); buffer.add("assistant", response)
                 print(f"\n  {settings.assistant_name}: {response}\n")
-                logger.info(f"Assistant: {response[:200]}")
-    
         except KeyboardInterrupt:
-            print(f"\n\n  {settings.assistant_name}: Session terminated. Goodbye, {settings.user_name}.\n")
-            logger.info("Session terminated by user (Ctrl+C)")
+            pass
 
     logger.info("Shutdown complete.")
 
