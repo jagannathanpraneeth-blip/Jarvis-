@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JARVIS Interface</title>
+    <title>JARVIS Core Interface</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0a0e17;
-            --accent-blue: #00e5ff;
-            --accent-blue-dim: rgba(0, 229, 255, 0.2);
-            --card-bg: rgba(255, 255, 255, 0.03);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --text-primary: #e2e8f0;
-            --text-secondary: #94a3b8;
+            --neon-cyan: #00e5ff;
+            --neon-cyan-dim: rgba(0, 229, 255, 0.2);
+            --neon-cyan-glow: rgba(0, 229, 255, 0.6);
+            --bg-color: #030710;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
         }
 
         body {
@@ -23,268 +25,304 @@
             padding: 0;
             background-color: var(--bg-color);
             background-image: 
-                radial-gradient(circle at 15% 50%, rgba(0, 229, 255, 0.05), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(0, 150, 255, 0.05), transparent 25%);
-            color: var(--text-primary);
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
+                radial-gradient(circle at center, rgba(0, 229, 255, 0.05) 0%, transparent 60%);
+            color: var(--neon-cyan);
+            font-family: 'Rajdhani', sans-serif;
+            height: 100vh;
+            overflow: hidden;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
-        header {
-            padding: 20px 40px;
+        /* Ambient Background Grid */
+        .grid-bg {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(rgba(0, 229, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            perspective: 1000px;
+            transform-origin: center;
+            animation: grid-pulse 10s infinite alternate;
+        }
+
+        @keyframes grid-pulse {
+            0% { opacity: 0.3; transform: scale(1); }
+            100% { opacity: 0.8; transform: scale(1.05); }
+        }
+
+        /* ─── ARC REACTOR CORE ─── */
+        .arc-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid var(--neon-cyan-dim);
+        }
+
+        /* Outer Rotating Ring */
+        .ring-outer {
+            width: 450px;
+            height: 450px;
+            border-top: 4px solid var(--neon-cyan);
+            border-bottom: 4px solid var(--neon-cyan);
+            animation: spin 8s linear infinite;
+            box-shadow: 0 0 20px var(--neon-cyan-dim);
+        }
+
+        /* Middle Dashed Ring */
+        .ring-middle {
+            width: 380px;
+            height: 380px;
+            border: 2px dashed var(--neon-cyan);
+            animation: spin-reverse 12s linear infinite;
+            opacity: 0.7;
+        }
+
+        /* Inner Energy Core */
+        .energy-core {
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, #fff 0%, var(--neon-cyan) 40%, transparent 70%);
+            border-radius: 50%;
+            box-shadow: 0 0 50px var(--neon-cyan-glow), inset 0 0 30px #fff;
+            animation: pulse-idle 4s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.5s ease;
+        }
+
+        /* Core State Label */
+        .core-state {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            letter-spacing: 4px;
+            color: #fff;
+            text-shadow: 0 0 10px var(--neon-cyan);
+            z-index: 20;
+            text-transform: uppercase;
+        }
+
+        /* Core Animations based on State */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes spin-reverse { 100% { transform: rotate(-360deg); } }
+        
+        @keyframes pulse-idle {
+            0% { transform: scale(1); box-shadow: 0 0 50px var(--neon-cyan-glow); }
+            50% { transform: scale(1.05); box-shadow: 0 0 80px rgba(0, 229, 255, 0.8); }
+            100% { transform: scale(1); box-shadow: 0 0 50px var(--neon-cyan-glow); }
+        }
+
+        /* ─── HOLOGRAPHIC TELEMETRY PANELS ─── */
+        .panel {
+            position: absolute;
+            background: rgba(0, 20, 30, 0.4);
+            border: 1px solid var(--neon-cyan-dim);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            width: 300px;
+            clip-path: polygon(0 0, 90% 0, 100% 10%, 100% 100%, 10% 100%, 0 90%);
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px; height: 100%;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        .panel-left { left: 50px; top: 50%; transform: translateY(-50%); }
+        .panel-right { right: 50px; top: 50%; transform: translateY(-50%); }
+        .panel-top { top: 30px; left: 50%; transform: translateX(-50%); width: 400px; text-align: center; }
+
+        .panel-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--neon-cyan-dim);
+            padding-bottom: 5px;
+        }
+
+        .stat-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--card-border);
-            background: rgba(10, 14, 23, 0.8);
-            backdrop-filter: blur(12px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .orb {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #fff, var(--accent-blue));
-            box-shadow: 0 0 20px var(--accent-blue-dim);
-            animation: pulse 4s infinite;
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 15px var(--accent-blue-dim); }
-            50% { box-shadow: 0 0 30px rgba(0, 229, 255, 0.4); }
-            100% { box-shadow: 0 0 15px var(--accent-blue-dim); }
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 600;
-            letter-spacing: 2px;
-            background: linear-gradient(90deg, #fff, var(--accent-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            background: var(--accent-blue-dim);
-            color: var(--accent-blue);
-            border: 1px solid var(--accent-blue);
-        }
-
-        main {
-            padding: 40px;
-            flex-grow: 1;
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 30px;
-            max-width: 1600px;
-            margin: 0 auto;
-            width: calc(100% - 80px);
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 25px;
-            backdrop-filter: blur(16px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card-header {
+            margin-bottom: 12px;
             font-size: 1.1rem;
             font-weight: 600;
-            color: #fff;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
-        /* Logs Console */
-        .console {
-            background: #000;
-            border-radius: 8px;
-            padding: 15px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: #a9b7c6;
-            overflow-y: auto;
-            flex-grow: 1;
-            max-height: 600px;
-            line-height: 1.5;
-            border: 1px solid #1e293b;
-        }
-        
-        .log-info { color: #5bc0de; }
-        .log-warn { color: #f0ad4e; }
-        .log-error { color: #d9534f; }
-        .log-user { color: #5cb85c; }
-        
-        /* Stats Panel */
-        .stat-group {
-            margin-bottom: 25px;
-        }
+        .stat-label { color: rgba(255,255,255,0.5); }
+        .stat-value { text-shadow: 0 0 8px var(--neon-cyan-dim); }
+        .value-warn { color: #ff3366; text-shadow: 0 0 8px rgba(255, 51, 102, 0.5); }
 
-        .stat-label {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
+        /* Camera Feed Hidden Panel */
+        #camera-panel {
+            display: none; /* Only show when activated */
+            bottom: 40px;
+            right: 50px;
+            top: auto;
+            transform: none;
+            width: 350px;
+            height: 250px;
         }
-
-        .stat-value {
-            font-size: 1.2rem;
-            color: #fff;
-            font-weight: 300;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="brand">
-            <div class="orb"></div>
-            <h1>JARVIS</h1>
-        </div>
-        <div class="status-badge" id="conn-status">ONLINE</div>
-    </header>
+    <div class="grid-bg"></div>
 
-    <main>
-        <!-- Live Terminal Stream -->
-        <div class="card">
-            <div class="card-header">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
-                Live Diagnostics
-            </div>
-            <div class="console" id="log-container">
-                <!-- Logs injected here -->
-                <div style="color: #64748b;">Waiting for system logs...</div>
-            </div>
-        </div>
+    <!-- Top Branding -->
+    <div class="panel panel-top">
+        <h1 style="margin:0; font-family: 'Orbitron'; font-size: 2rem; letter-spacing: 8px;">J.A.R.V.I.S.</h1>
+        <div style="font-size: 0.9rem; letter-spacing: 3px; color: rgba(255,255,255,0.5);">AUTONOMOUS AI MATRIX</div>
+    </div>
 
-        <!-- Sidebar Stats -->
-        <div class="card">
-            <div class="card-header">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                System Telemetry
-            </div>
-            
-            <div class="stat-group">
-                <div class="stat-label">Model Engine</div>
-                <div class="stat-value" id="stat-model">Loading...</div>
-            </div>
-            
-            <div class="stat-group">
-                <div class="stat-label">God Mode</div>
-                <div class="stat-value" id="stat-godmode" style="color: var(--accent-blue);">Disabled</div>
-            </div>
-            
-            <div class="stat-group">
-                <div class="stat-label">Voice Output</div>
-                <div class="stat-value" id="stat-voice">Loading...</div>
-            </div>
-            
-            <div class="stat-group">
-                <div class="stat-label">Active Sub-Agents</div>
-                <div class="stat-value" id="stat-agents">0</div>
-            </div>
+    <!-- Left Telemetry -->
+    <div class="panel panel-left">
+        <div class="panel-title">SYSTEM PROTOCOLS</div>
+        
+        <div class="stat-row">
+            <span class="stat-label">NEURAL ENGINE</span>
+            <span class="stat-value" id="stat-model">NEMOTRON</span>
         </div>
-    </main>
+        
+        <div class="stat-row">
+            <span class="stat-label">GOD MODE</span>
+            <span class="stat-value" id="stat-godmode">INACTIVE</span>
+        </div>
+        
+        <div class="stat-row">
+            <span class="stat-label">VOICE SYNTHESIS</span>
+            <span class="stat-value" id="stat-voice">ONLINE</span>
+        </div>
+        
+        <div class="stat-row" style="margin-top: 20px;">
+            <span class="stat-label">UPLINK</span>
+            <span class="stat-value" id="conn-status">STABLE</span>
+        </div>
+    </div>
+
+    <!-- Central Arc Reactor -->
+    <div class="arc-container">
+        <div class="ring ring-outer"></div>
+        <div class="ring ring-middle"></div>
+        <div class="energy-core" id="core">
+            <div class="core-state" id="core-state">IDLE</div>
+        </div>
+    </div>
+
+    <!-- Right Telemetry -->
+    <div class="panel panel-right">
+        <div class="panel-title">ENVIRONMENT</div>
+        
+        <div class="stat-row">
+            <span class="stat-label">SUB-ROUTINES</span>
+            <span class="stat-value">OPERATIONAL</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">PERSISTENCE</span>
+            <span class="stat-value">ACTIVE</span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">OPTICAL SENSOR</span>
+            <span class="stat-value">STANDBY</span>
+        </div>
+    </div>
+
+    <!-- Future Video Panel -->
+    <div class="panel" id="camera-panel">
+        <div class="panel-title">LIVE OPTICAL FEED</div>
+        <div style="width: 100%; height: calc(100% - 40px); background: #000; border: 1px solid var(--neon-cyan-dim); display: flex; align-items: center; justify-content: center;">
+            [FEED OFFLINE]
+        </div>
+    </div>
 
     <script>
-        const logContainer = document.getElementById('log-container');
+        const core = document.getElementById('core');
+        const coreStateText = document.getElementById('core-state');
         
-        function formatLog(line) {
-            // Apply simple colors based on keywords
-            let formatted = line
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-                
-            if (formatted.includes("ERROR") || formatted.includes("[FAIL]")) {
-                return `<span class="log-error">${formatted}</span>`;
-            } else if (formatted.includes("WARNING") || formatted.includes("[WARN]")) {
-                return `<span class="log-warn">${formatted}</span>`;
-            } else if (formatted.includes("User:") || formatted.includes("Sir >")) {
-                return `<span class="log-user">${formatted}</span>`;
-            } else if (formatted.includes("INFO") || formatted.includes("[PASS]")) {
-                return `<span class="log-info">${formatted}</span>`;
-            }
-            return formatted;
-        }
-
         async function fetchState() {
             try {
-                // Fetch Status
+                // Fetch internal status config
                 const statusRes = await fetch('/api/status');
                 const statusData = await statusRes.json();
                 
-                document.getElementById('stat-model').textContent = statusData.model;
+                // Update UI panels
+                document.getElementById('stat-model').textContent = statusData.model.split('/')[1] || statusData.model;
                 
                 const gmEl = document.getElementById('stat-godmode');
-                gmEl.textContent = statusData.god_mode ? "ACTIVE" : "Restricted";
-                gmEl.style.color = statusData.god_mode ? "#d9534f" : "var(--accent-blue)";
+                gmEl.textContent = statusData.god_mode ? "ACTIVE" : "RESTRICTED";
+                gmEl.className = statusData.god_mode ? "stat-value value-warn" : "stat-value";
                 
                 const voiceEl = document.getElementById('stat-voice');
-                voiceEl.textContent = statusData.muted ? "Muted" : "Active";
-                voiceEl.style.color = statusData.muted ? "#f0ad4e" : "var(--text-primary)";
+                voiceEl.textContent = statusData.muted ? "MUTED" : "ONLINE";
+                voiceEl.className = statusData.muted ? "stat-value value-warn" : "stat-value";
                 
-                // Fetch Logs
-                const logRes = await fetch('/api/logs?lines=50');
-                const logData = await logRes.json();
+                document.getElementById('conn-status').textContent = "STABLE";
+                document.getElementById('conn-status').style.color = "var(--neon-cyan)";
                 
-                if (logData.logs) {
-                    const isScrolledToBottom = logContainer.scrollHeight - logContainer.clientHeight <= logContainer.scrollTop + 1;
-                    
-                    logContainer.innerHTML = logData.logs.map(l => `<div>${formatLog(l)}</div>`).join('');
-                    
-                    // Auto-scroll if they were already at the bottom
-                    if (isScrolledToBottom) {
-                        logContainer.scrollTop = logContainer.scrollHeight;
-                    }
+                // Determine JARVIS visual state (idle, listening, thinking, speaking)
+                // We'll read this from a new IPC state file via API or logs. 
+                // For now, if logs are actively streaming, we simulate thinking.
+                // In Phase 9, we can expose `/api/state` from the cross-process temp file.
+                
+                const stateRes = await fetch('/api/state').catch(() => null);
+                if (stateRes) {
+                    const stateData = await stateRes.json();
+                    updateCore(stateData.status.toUpperCase());
+                } else {
+                    updateCore("IDLE");
                 }
-                
-                document.getElementById('conn-status').textContent = "ONLINE";
-                document.getElementById('conn-status').style.borderColor = "var(--accent-blue)";
-                document.getElementById('conn-status').style.color = "var(--accent-blue)";
-                
+
             } catch (err) {
-                console.error("Connection error:", err);
-                document.getElementById('conn-status').textContent = "OFFLINE";
-                document.getElementById('conn-status').style.borderColor = "#d9534f";
-                document.getElementById('conn-status').style.color = "#d9534f";
+                document.getElementById('conn-status').textContent = "DISCONNECTED";
+                document.getElementById('conn-status').className = "stat-value value-warn";
+                updateCore("OFFLINE");
+            }
+        }
+        
+        function updateCore(state) {
+            coreStateText.textContent = state;
+            
+            if (state === "THINKING") {
+                core.style.background = "radial-gradient(circle, #fff 0%, #ffaa00 40%, transparent 70%)";
+                core.style.boxShadow = "0 0 80px rgba(255, 170, 0, 0.8), inset 0 0 30px #fff";
+                core.style.animationDuration = "0.5s";
+            } else if (state === "SPEAKING") {
+                core.style.background = "radial-gradient(circle, #fff 0%, #0066ff 40%, transparent 70%)";
+                core.style.boxShadow = "0 0 100px rgba(0, 102, 255, 0.9), inset 0 0 30px #fff";
+                core.style.animationDuration = "0.2s";
+            } else if (state === "LISTENING") {
+                core.style.background = "radial-gradient(circle, #fff 0%, #00ff66 40%, transparent 70%)";
+                core.style.boxShadow = "0 0 60px rgba(0, 255, 102, 0.7), inset 0 0 30px #fff";
+                core.style.animationDuration = "2s";
+            } else {
+                // Idle / Offline
+                core.style.background = "radial-gradient(circle, #fff 0%, var(--neon-cyan) 40%, transparent 70%)";
+                core.style.boxShadow = "0 0 50px var(--neon-cyan-glow), inset 0 0 30px #fff";
+                core.style.animationDuration = "4s";
             }
         }
 
-        // Poll every 1 second
-        setInterval(fetchState, 1000);
+        // Poll every 500ms
+        setInterval(fetchState, 500);
         fetchState();
     </script>
 </body>

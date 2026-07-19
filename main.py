@@ -16,9 +16,13 @@ from core.brain import Brain
 from memory.buffer import ConversationBuffer
 from core.voice_loop import VoiceLoop
 import threading
+import multiprocessing
 
 from ui.tray import TrayApp
 from ui.dashboard import serve as serve_dashboard
+from ui.hud import run_hud
+from core.scheduler import JARVISScheduler
+from core.startup import ensure_startup
 
 
 def print_banner(assistant_name: str, user_name: str) -> None:
@@ -60,19 +64,33 @@ def main() -> None:
     brain = Brain(settings)
     buffer = ConversationBuffer(max_turns=settings.memory.buffer_size)
 
+    # Inject JARVIS into Windows startup sequence (Phase 9)
+    ensure_startup()
+
     logger.info("All systems online.")
     
-    # ── Start UI Components (Phase 7) ──
-    logger.info("Starting UI components...")
+    # ── Start UI Components (Phase 7 & 8) ──
+    logger.info("Starting UI components and background processes...")
+    
+    # 1. System Tray
     tray = TrayApp(settings)
     tray.start()
     
+    # 2. Web Dashboard
     dashboard_thread = threading.Thread(
         target=serve_dashboard, 
         args=(settings, brain), 
         daemon=True
     )
     dashboard_thread.start()
+    
+    # 3. HUD Overlay (Multiprocessing)
+    hud_process = multiprocessing.Process(target=run_hud, daemon=True)
+    hud_process.start()
+    
+    # 4. Proactive Scheduler
+    scheduler = JARVISScheduler(settings, brain, buffer)
+    scheduler.start()
     
     print_banner(settings.assistant_name, settings.user_name)
 

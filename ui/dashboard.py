@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 from core.logger import get_logger
+from core.state import get_state
 
 logger = get_logger("ui.dashboard")
 
@@ -39,6 +40,11 @@ async def get_status():
         "model": getattr(_settings.brain, 'model', 'unknown') if _settings and hasattr(_settings, 'brain') else "unknown",
         "active_agents": [] # Would hook into Swarm state
     }
+
+@app.get("/api/state")
+async def api_get_state():
+    """Returns the current system state."""
+    return get_state()
 
 @app.get("/api/logs")
 async def get_logs(lines: int = 50):

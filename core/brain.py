@@ -11,6 +11,7 @@ import json
 import time
 from datetime import datetime
 from typing import Any, Callable
+from core.state import set_state
 
 from openai import OpenAI, AsyncOpenAI
 
@@ -94,6 +95,7 @@ class Brain:
         Send a message to the LLM with conversation history and tools.
         (Synchronous version for the simple text chat).
         """
+        set_state("thinking")
         # Build OpenAI message format
         messages = [{"role": "system", "content": self._system_prompt}]
         for turn in history:
@@ -131,6 +133,7 @@ class Brain:
                 print(f"\n[Thinking]\n{getattr(message, 'reasoning_content')}\n")
 
             if not message.tool_calls:
+                set_state("idle")
                 return message.content or "I processed your request but have nothing to add."
 
             # Add assistant's tool call request to messages
@@ -165,6 +168,7 @@ class Brain:
                     "content": str(result)[:5000] # Truncate to prevent context window explosion
                 })
 
+        set_state("idle")
         return "I got stuck in a loop trying to use my tools."
 
     def register_tool(
